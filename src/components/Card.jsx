@@ -4,19 +4,18 @@ import { useEffect, useState } from "react";
 export const Card = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState();
+  const savedPostsInLocalStorage = JSON.parse(localStorage.getItem("posts"));
 
   useEffect(() => {
     (async function () {
-      if (JSON.parse(localStorage.getItem("posts"))?.length > 0) {
-        const savedPosts = localStorage.getItem("posts");
-        setPosts(JSON.parse(savedPosts));
+      if (savedPostsInLocalStorage?.length > 0) {
+        setPosts(savedPostsInLocalStorage);
       } else {
         try {
           setLoading(true);
           const { data } = await axios.get(
             "https://api.nasa.gov/planetary/apod?api_key=q54UDDMuZowyEVMm0lmIIVeikVv8h6wc8JPOKVeV&count=10"
           );
-          console.log(JSON.parse(localStorage.getItem("posts"))?.length > 0);
           setPosts(data);
         } finally {
           setLoading(false);
@@ -27,26 +26,20 @@ export const Card = () => {
 
   const likeHandler = (index) => {
     const postToBeUpdated = posts[index];
+    const updatedPost = {
+      ...postToBeUpdated,
+      liked: postToBeUpdated.liked ? false : true,
+    };
     setPosts((prev) =>
       prev.map((item) =>
-        item.title === postToBeUpdated.title
-          ? {
-              ...item,
-              liked: item.liked ? false : true,
-            }
-          : item
+        item.title === postToBeUpdated.title ? updatedPost : item
       )
     );
     localStorage.setItem(
       "posts",
       JSON.stringify(
         posts.map((item) =>
-          item.title === postToBeUpdated.title
-            ? {
-                ...item,
-                liked: item.liked ? false : true,
-              }
-            : item
+          item.title === postToBeUpdated.title ? updatedPost : item
         )
       )
     );
@@ -63,7 +56,7 @@ export const Card = () => {
             <span className="copyright">
               Brought to you by {copyright ? copyright : "NASA"}
             </span>
-            <img src={url} alt="nasa-img" className="img"></img>
+            <img src={url} alt={title} className="img"></img>
             <div className="details">
               <span className="explanation">
                 {explanation?.slice(0, 60)}...
